@@ -1,1 +1,1 @@
-const test = { version: 1.1 };
+const test = { version: 2 };

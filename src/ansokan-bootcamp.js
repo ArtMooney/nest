@@ -66,10 +66,7 @@ function listCookies() {
   }
 })();
 
-//
 // repopulate-form
-//
-
 (function repopulateForm() {
   window.onload = function () {
     if (readCookie.getCookie("nest-form2") !== undefined) {
@@ -131,19 +128,13 @@ function listCookies() {
   };
 })();
 
-//
 // scroll to anchor
-//
-
 function anchorScroll(input) {
   input.select();
   window.scrollTo(0, input.offsetTop);
 }
 
-//
 // make inits
-//
-
 var allInputs = document
   .getElementById("ansokan")
   .getElementsByTagName("input");
@@ -155,10 +146,7 @@ var allSelectors = document
   .getElementsByTagName("select");
 var formSave = {};
 
-//
 // form collector
-//
-
 var saveInterval = setInterval(() => {
   // Get all relevant inputs
   for (var i = 0; i < allInputs.length; i++) {
@@ -197,10 +185,7 @@ var saveInterval = setInterval(() => {
   }
 }, 3000);
 
-//
 // add-member
-//
-
 document
   .getElementById("add-team-member")
   .addEventListener("click", function () {
@@ -220,10 +205,7 @@ document
     moreMembersText[moreMembersText.length - 1].removeAttribute("required");
   });
 
-//
 // character-counter
-//
-
 var allDivs = document.querySelectorAll("div");
 
 for (var i = 0; i < allDivs.length; i++) {
@@ -247,10 +229,7 @@ for (var i = 0; i < allDivs.length; i++) {
   }
 }
 
-//
 // send form
-//
-
 document.getElementById("send-form").addEventListener("click", function () {
   document.getElementById("send-warning").style.display = "none";
   var formdata = new FormData();
