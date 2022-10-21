@@ -1,44 +1,35 @@
-// handle cookies
-var readCookie = (function () {
-  return {
-    getCookie: function (name) {
-      var value = "; " + document.cookie;
-      var parts = value.split("; " + name + "=");
-      if (parts.length === 2) {
-        return parts.pop().split(";").shift();
-      }
-    },
-  };
-})();
+// variables
+const formId = document.getElementById("ansokan-bootcamp");
 
-var createCookie = function (name, value, days) {
-  var expires;
-  if (days) {
-    var date = new Date();
-    date.setTime(date.getTime() + days * 24 * 60 * 60 * 1000);
-    expires = "; expires=" + date.toGMTString();
-  } else {
-    expires = "";
-  }
-  document.cookie = name + "=" + value + expires + "; path=/";
+// functions
+setWithExpiry = (key, value, ttl) => {
+  const now = new Date();
+  const item = {
+    value: value,
+    expiry: now.getTime() + ttl,
+  };
+  localStorage.setItem(key, JSON.stringify(item));
 };
 
-function deleteCookie(name) {
-  document.cookie = name + "=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;";
-}
+getWithExpiry = (key) => {
+  const itemStr = localStorage.getItem(key);
 
-function listCookies() {
-  var theCookies = document.cookie.split(";");
-  var aString = "";
-  for (var i = 1; i <= theCookies.length; i++) {
-    aString += i + " " + theCookies[i - 1] + "\n";
+  if (!itemStr) return null;
+
+  const item = JSON.parse(itemStr);
+  const now = new Date();
+
+  if (now.getTime() > item.expiry) {
+    // If the item is expired, delete the item from storage and return null
+    localStorage.removeItem(key);
+    return null;
   }
-  return aString;
-}
 
-// get hubspot data
-(function getHubspotData() {
-  var formId = document.getElementById("ansokan");
+  return item.value;
+};
+
+function getHubspotData(formId) {
+  var formId = document.getElementById(formId);
 
   var requestOptions = {
     method: "GET",
@@ -58,75 +49,53 @@ function listCookies() {
       formId.pagename.value = document.title;
     })
     .catch((error) => console.log("error", error));
+}
 
-  if (readCookie.getCookie("hubspotutk") !== undefined) {
-    formId.hubspotutk.value = readCookie.getCookie("hubspotutk");
-  } else {
-    formId.hubspotutk.value = "";
-  }
-})();
+function repopulateForm() {
+  const formSave = getWithExpiry("nest-bootcamp");
 
-// repopulate-form
-(function repopulateForm() {
-  window.onload = function () {
-    if (readCookie.getCookie("nest-form2") !== undefined) {
-      var formCookie = JSON.parse(readCookie.getCookie("nest-form2"));
-
-      var allInputs = document
-        .getElementById("ansokan")
-        .getElementsByTagName("input");
-      var allTextareas = document
-        .getElementById("ansokan")
-        .getElementsByTagName("textarea");
-      var allSelectors = document
-        .getElementById("ansokan")
-        .getElementsByTagName("select");
-
-      // Get all relevant inputs
-      for (var i = 0; i < allInputs.length; i++) {
-        if (formCookie[allInputs[i].name] !== undefined) {
-          if (allInputs[i].type === "checkbox") {
-            allInputs[i].checked = formCookie[allInputs[i].name];
-            if (allInputs[i].checked === true) {
-              allInputs[i].click();
-              if (allInputs[i].checked !== true) allInputs[i].checked = true;
-            }
-          } else {
-            allInputs[i].value = formCookie[allInputs[i].name];
+  if (formSave) {
+    // Add all inputs
+    for (const item of formId.querySelectorAll("input")) {
+      for (const input of formSave) {
+        if (item.type === "checkbox") {
+          if (item.name === Object.keys(input)[0]) {
+            if (Object.values(input)[0] === true) item.click();
           }
-        }
-      }
-
-      // Add dynamic member textareas
-      var numberOfDynamicElements = 0;
-      for (var key in formCookie) {
-        for (var memberNumber = 2; memberNumber < 10; memberNumber++) {
-          if (key === "member" + memberNumber) {
-            numberOfDynamicElements++;
+        } else if (item.type === "radio") {
+          if (item.value === Object.keys(input)[0]) {
+            if (Object.values(input)[0] === true) item.click();
           }
-        }
-      }
-
-      for (i = 0; i < numberOfDynamicElements; i++) {
-        document.getElementById("add-team-member").click();
-      }
-
-      // Get all relevant textareas
-      for (i = 0; i < allTextareas.length; i++) {
-        if (formCookie[allTextareas[i].name] !== undefined) {
-          allTextareas[i].value = formCookie[allTextareas[i].name];
-        }
-      }
-
-      // Get all relevant selectors
-      for (i = 0; i < allSelectors.length; i++) {
-        if (formCookie[allSelectors[i].name] !== undefined) {
-          allSelectors[i].value = formCookie[allSelectors[i].name];
+        } else if (item.type === "file") {
+          if (item.name === Object.keys(input)[0]) {
+          }
+        } else {
+          if (item.name === Object.keys(input)[0]) {
+            item.value = Object.values(input)[0];
+          }
         }
       }
     }
-  };
-})();
+
+    // Add all textareas
+    for (const item of formId.querySelectorAll("textarea")) {
+      for (const input of formSave) {
+        if (item.name === Object.keys(input)[0]) {
+          item.value = Object.values(input)[0];
+        }
+      }
+    }
+
+    // Add all selectors
+    for (const item of formId.querySelectorAll("select")) {
+      for (const input of formSave) {
+        if (item.name === Object.keys(input)[0]) {
+          item.value = Object.values(input)[0];
+        }
+      }
+    }
+  }
+}
 
 // scroll to anchor
 function anchorScroll(input) {
@@ -134,213 +103,164 @@ function anchorScroll(input) {
   window.scrollTo(0, input.offsetTop);
 }
 
-// make inits
-var allInputs = document
-  .getElementById("ansokan")
-  .getElementsByTagName("input");
-var allTextareas = document
-  .getElementById("ansokan")
-  .getElementsByTagName("textarea");
-var allSelectors = document
-  .getElementById("ansokan")
-  .getElementsByTagName("select");
-var formSave = {};
+function characterCounter() {
+  var allDivs = document.querySelectorAll("div");
 
-// form collector
-var saveInterval = setInterval(() => {
-  // Get all relevant inputs
-  for (var i = 0; i < allInputs.length; i++) {
-    if (
-      allInputs[i].value !== "Skicka" &&
-      allInputs[i].name !== "filename" &&
-      allInputs[i].name !== "gdpr-confirm" &&
-      allInputs[i].name !== "clientip" &&
-      allInputs[i].name !== "hubspotutk" &&
-      allInputs[i].name !== "pageuri" &&
-      allInputs[i].name !== "pagename"
-    ) {
-      if (allInputs[i].type === "checkbox") {
-        formSave[allInputs[i].name] = allInputs[i].checked;
-      } else {
-        formSave[allInputs[i].name] = allInputs[i].value;
-      }
-    }
-  }
-
-  // Get all relevant textareas
-  for (i = 0; i < allTextareas.length; i++) {
-    formSave[allTextareas[i].name] = allTextareas[i].value;
-  }
-
-  // Get all relevant selectors
-  for (i = 0; i < allSelectors.length; i++) {
-    formSave[allSelectors[i].name] = allSelectors[i].value;
-  }
-
-  if (readCookie.getCookie("nest-form2") === undefined) {
-    createCookie("nest-form2", JSON.stringify(formSave), 180);
-  } else {
-    deleteCookie("nest-form2");
-    createCookie("nest-form2", JSON.stringify(formSave), 180);
-  }
-}, 3000);
-
-// add-member
-document
-  .getElementById("add-team-member")
-  .addEventListener("click", function () {
-    var member = document.getElementById("member");
-    var memberData = document
-      .getElementById("member")
-      .getElementsByTagName("textarea")[0];
-
-    var moreMembers = document.getElementById("more-members");
-    moreMembers.insertAdjacentHTML("beforeend", member.innerHTML);
-    var moreMembersText = moreMembers.getElementsByTagName("textarea");
-
-    moreMembersText[moreMembersText.length - 1].name =
-      memberData.name + (moreMembersText.length + 1);
-
-    moreMembersText[moreMembersText.length - 1].removeAttribute("id");
-    moreMembersText[moreMembersText.length - 1].removeAttribute("required");
-  });
-
-// character-counter
-var allDivs = document.querySelectorAll("div");
-
-for (var i = 0; i < allDivs.length; i++) {
-  if (allDivs[i].getAttribute("counter")) {
-    var maxLength = allDivs[i].getElementsByClassName("input")[0].maxLength;
-    var currentLength =
-      allDivs[i].getElementsByClassName("input")[0].value.length;
-    allDivs[i].getElementsByClassName("counter")[0].innerHTML =
-      maxLength - currentLength;
-
-    allDivs[i].addEventListener("keyup", function (event) {
-      var maxLength =
-        event.target.parentElement.getElementsByClassName("input")[0].maxLength;
+  for (var i = 0; i < allDivs.length; i++) {
+    if (allDivs[i].getAttribute("counter")) {
+      var maxLength = allDivs[i].getElementsByClassName("input")[0].maxLength;
       var currentLength =
-        event.target.parentElement.getElementsByClassName("input")[0].value
-          .length;
-      event.target.parentElement.getElementsByClassName(
-        "counter"
-      )[0].innerHTML = maxLength - currentLength;
-    });
+        allDivs[i].getElementsByClassName("input")[0].value.length;
+      allDivs[i].getElementsByClassName("counter")[0].innerHTML =
+        maxLength - currentLength;
+
+      allDivs[i].addEventListener("keyup", function (event) {
+        var maxLength =
+          event.target.parentElement.getElementsByClassName("input")[0]
+            .maxLength;
+        var currentLength =
+          event.target.parentElement.getElementsByClassName("input")[0].value
+            .length;
+        event.target.parentElement.getElementsByClassName(
+          "counter"
+        )[0].innerHTML = maxLength - currentLength;
+      });
+    }
   }
 }
 
-// send form
-document.getElementById("send-form").addEventListener("click", function () {
-  document.getElementById("send-warning").style.display = "none";
-  var formdata = new FormData();
+function formCollector() {
+  var saveInterval = setInterval(() => {
+    let formSave = [];
 
-  // Get all relevant inputs
-  for (var i = 0; i < allInputs.length; i++) {
-    if (
-      allInputs[i].value !== "Skicka" &&
-      allInputs[i].name !== "filename" &&
-      allInputs[i].name !== "gdpr-confirm"
-    ) {
-      if (allInputs[i].type === "checkbox") {
-        formdata.append(allInputs[i].name, allInputs[i].checked);
+    // append all inputs except button
+    for (const item of formId.querySelectorAll("input")) {
+      if (item.type !== "submit") {
+        if (item.type === "file") {
+          if (item.files[0]) {
+            for (const file of item.files) {
+              formSave.push({
+                [item.name]: {
+                  lastModified: file.lastModified,
+                  name: file.name,
+                  size: file.size,
+                  type: file.type,
+                },
+              });
+            }
+          }
+        } else if (
+          item.name !== "gdpr-confirm" &&
+          item.name !== "clientip" &&
+          item.name !== "hubspotutk" &&
+          item.name !== "pageuri" &&
+          item.name !== "pagename"
+        ) {
+          if (item.type === "checkbox") {
+            formSave.push({ [item.name]: item.checked });
+          } else if (item.type === "radio") {
+            formSave.push({ [item.value]: item.checked });
+          } else {
+            formSave.push({ [item.name]: item.value });
+          }
+        }
+      }
+    }
+
+    // append all textareas
+    for (const item of formId.querySelectorAll("textarea")) {
+      formSave.push({ [item.name]: item.value });
+    }
+
+    // Get all relevant selectors
+    for (const item of formId.querySelectorAll("select")) {
+      formSave.push({ [item.name]: item.value });
+    }
+
+    setWithExpiry("nest-bootcamp", formSave, 1000 * 60 * 60 * 24 * 180);
+  }, 3000);
+}
+
+document.getElementById("send-form").addEventListener("click", (event) => {
+  let formdata = new FormData();
+  let formComplete = true;
+
+  Webflow.push(function () {
+    // disable webflow form submit
+    $("form").submit(function () {
+      return false;
+    });
+  });
+
+  // append all inputs except button
+  for (const item of formId.querySelectorAll("input")) {
+    if (item.type !== "submit") {
+      if (item.type === "checkbox") {
+        if (item.required === true && item.checked === false)
+          formComplete = false;
+        formdata.append(item.name, item.checked);
+      } else if (item.type === "radio") {
+        formdata.append(item.value, item.checked);
+      } else if (item.type === "file") {
+        if (item.files[0]) {
+          formdata.append("file", item.files[0], item.files[0].name);
+        }
       } else {
-        formdata.append(allInputs[i].name, allInputs[i].value);
+        if (item.required === true && item.value === "") formComplete = false;
+        formdata.append(item.name, item.value);
       }
     }
   }
 
-  // Get all relevant textareas
-  for (i = 0; i < allTextareas.length; i++) {
-    formdata.append(allTextareas[i].name, allTextareas[i].value);
+  // append all textareas
+  for (const item of formId.querySelectorAll("textarea")) {
+    if (item.required === true && item.value === "") formComplete = false;
+    formdata.append(item.name, item.value);
   }
 
-  // Get all relevant selectors
-  for (i = 0; i < allSelectors.length; i++) {
-    formdata.append(allSelectors[i].name, allSelectors[i].value);
+  // append all selectors
+  for (const item of formId.querySelectorAll("select")) {
+    if (item.required === true && item.value === "") formComplete = false;
+    formdata.append(item.name, item.value);
   }
 
-  // Get all relevant files
-  for (i = 0; i < allInputs.length; i++) {
-    if (allInputs[i].type === "file") {
-      if (allInputs[i].files[0]) {
-        formdata.append(
-          "file",
-          allInputs[i].files[0],
-          allInputs[i].files[0].name
+  if (formComplete) {
+    var requestOptions = {
+      method: "POST",
+      body: formdata,
+      redirect: "follow",
+    };
+
+    fetch("https://api.ngine.se/webhook-test/ansokan-bootcamp", requestOptions)
+      .then((response) => response.text())
+      .then((result) => {
+        // selector.disabled = true;
+        document.getElementById("send-form").value = "Vänta...";
+
+        setTimeout(() => {
+          // setWithExpiry("nest-bootcamp", "", 0);
+          document.getElementById("thank-you").click(); // redirect
+          // document.getElementById("success-message").style.display = "block";
+        }, 1000);
+      })
+      .catch((error) => {
+        console.log("error", error);
+        document.getElementById("error-message").style.display = "block";
+        formId.addEventListener(
+          "click",
+          (event) => {
+            document.getElementById("error-message").style.display = "none";
+          },
+          { once: true }
         );
-      }
-    }
+      });
   }
+});
 
-  if (document.getElementById("gdpr-confirm").checked === true) {
-    document.getElementById("gdpr-warning").style.display = "none";
-
-    // checklist;
-    var formDone = true;
-    for (i = 0; i < allInputs.length; i++) {
-      if (allInputs[i].required) {
-        if (allInputs[i].value === "") {
-          formDone = false;
-          anchorScroll(document.getElementById(allInputs[i].id));
-          i = allInputs.length;
-        }
-      }
-    }
-
-    if (formDone) {
-      for (i = 0; i < allTextareas.length; i++) {
-        if (allTextareas[i].required) {
-          if (allTextareas[i].value === "") {
-            formDone = false;
-            anchorScroll(document.getElementById(allTextareas[i].id));
-            i = allTextareas.length;
-          }
-        }
-      }
-    }
-
-    if (formDone) {
-      for (i = 0; i < allSelectors.length; i++) {
-        if (allSelectors[i].required) {
-          if (
-            allSelectors[i].value === "" ||
-            allSelectors[i].value === "Vet ej"
-          ) {
-            formDone = false;
-            window.scrollTo(
-              0,
-              document.getElementById(allSelectors[i].id).offsetTop
-            );
-            i = allSelectors.length;
-          }
-        }
-      }
-    }
-
-    if (formDone) {
-      var requestOptions = {
-        method: "POST",
-        body: formdata,
-        redirect: "follow",
-      };
-
-      fetch("https://ngine.app.n8n.cloud/webhook/ansokan", requestOptions)
-        .then((response) => response.text())
-        .then((result) => {
-          document.getElementById("send-form").innerHTML = "Vänta...";
-
-          setTimeout(() => {
-            clearInterval(saveInterval);
-            deleteCookie("nest-form2");
-            document.getElementById("thank-you").click();
-          }, 1000);
-        })
-        .catch((error) => {
-          console.log("error", error);
-          document.getElementById("send-warning").style.display = "flex";
-        });
-    }
-  } else {
-    document.getElementById("gdpr-warning").style.display = "flex";
-  }
+// document loaded
+window.addEventListener("load", () => {
+  getHubspotData("ansokan-bootcamp");
+  repopulateForm();
+  characterCounter();
+  formCollector();
 });
