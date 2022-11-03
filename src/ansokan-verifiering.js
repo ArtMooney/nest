@@ -17,6 +17,10 @@ window.addEventListener("load", () => {
       if (JSON.parse(result).status === "ok") {
         statusText.innerHTML =
           "Verifieringen gick bra och ni ska nu ha fått ett nytt mail från oss!";
+
+        setTimeout(() => {
+          document.getElementById("to-startpage").click();
+        }, 3000);
       } else if (JSON.parse(result).status === "No id found") {
         statusText.innerHTML =
           "Vi kunde inte hitta er verifiering hos oss, den kanske redan gjorts eller så har det gått för lång tid.";

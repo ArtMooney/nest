@@ -236,9 +236,9 @@ document.getElementById("send-form").addEventListener("click", (event) => {
       .then((result) => {
         // selector.disabled = true;
         document.getElementById("send-form").value = "Vänta...";
+        setWithExpiry("nest-bootcamp", "", 0);
 
         setTimeout(() => {
-          setWithExpiry("nest-bootcamp", "", 0);
           document.getElementById("thank-you").click(); // redirect
           // document.getElementById("success-message").style.display = "block";
         }, 1000);
