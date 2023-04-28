@@ -231,7 +231,7 @@ document.getElementById("send-form").addEventListener("click", (event) => {
       redirect: "follow",
     };
 
-    fetch("https://api.ngine.se/webhook-test/ansokan-bootcamp", requestOptions)
+    fetch("https://api.ngine.se/webhook/ansokan-bootcamp", requestOptions)
       .then((response) => response.text())
       .then((result) => {
         // selector.disabled = true;
@@ -259,7 +259,6 @@ document.getElementById("send-form").addEventListener("click", (event) => {
 
 // document loaded
 window.addEventListener("load", () => {
-  getHubspotData("ansokan-bootcamp");
   repopulateForm();
   characterCounter();
   formCollector();
